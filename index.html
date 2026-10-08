@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pet Thoughts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one phone-first column — a "translator device" card: photo window on top, voice dial, speech bubble output */
+:root{
+  --bg:#eef3ff; --panel:#ffffff; --ink:#1d2140; --muted:#5d6488;
+  --line:#d6ddf3; --accent:#ff5a8a; --accent-ink:#ffffff; --pop:#ffd23f;
+  --bubble:#1d2140; --bubble-ink:#fdfcff;
+  --display:"Bagel Fat One","Arial Rounded MT Bold",system-ui,sans-serif;
+  --body:"DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"DM Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12142a; --panel:#1c1f3d; --ink:#eef0ff; --muted:#a3a9d1;
+  --line:#2f3463; --accent:#ff6f99; --accent-ink:#1a0710; --pop:#ffd23f;
+  --bubble:#fdfcff; --bubble-ink:#1d2140; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12142a; --panel:#1c1f3d; --ink:#eef0ff; --muted:#a3a9d1;
+  --line:#2f3463; --accent:#ff6f99; --accent-ink:#1a0710; --pop:#ffd23f;
+  --bubble:#fdfcff; --bubble-ink:#1d2140; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 var(--body);margin:0}
+.wrap{max-width:560px;margin:0 auto;padding:28px 16px 48px;display:flex;flex-direction:column;gap:22px}
+header{display:flex;flex-direction:column;gap:6px}
+.eyebrow{font:500 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+h1{font:400 clamp(40px,11vw,62px)/.95 var(--display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1 span{color:var(--accent)}
+.sub{margin:0;color:var(--muted);max-width:44ch}
+
+.device{background:var(--panel);border:2px solid var(--ink);border-radius:28px;padding:16px;display:flex;flex-direction:column;gap:16px;box-shadow:6px 6px 0 var(--ink)}
+.window{position:relative;aspect-ratio:4/3;max-width:100%;border-radius:18px;overflow:hidden;background:repeating-linear-gradient(45deg,var(--bg) 0 14px,transparent 14px 28px),var(--panel);border:2px dashed var(--line);display:grid;place-items:center}
+.window img{width:100%;height:100%;object-fit:cover;display:block}
+.window .tag{position:absolute;top:10px;left:10px;font:500 11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;background:var(--pop);color:#1d2140;padding:6px 8px;border-radius:999px}
+.window svg{width:46%;height:auto}
+
+.pick{display:flex;gap:10px;flex-wrap:wrap}
+.btn{font:700 16px/1 var(--body);border:2px solid var(--ink);border-radius:999px;padding:14px 20px;cursor:pointer;background:var(--panel);color:var(--ink);display:inline-flex;align-items:center;gap:8px;transition:transform .12s}
+.btn:hover{transform:translateY(-1px)}
+.btn:active{transform:translateY(1px)}
+.btn:focus-visible,.chip:focus-visible{outline:3px solid var(--pop);outline-offset:2px}
+.btn.primary{background:var(--accent);color:var(--accent-ink);box-shadow:3px 3px 0 var(--ink)}
+.btn[disabled]{opacity:.5;cursor:not-allowed;transform:none}
+.btn.grow{flex:1 1 auto;justify-content:center}
+input[type=file]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+
+.label{font:500 12px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:500 14px/1 var(--body);border:1.5px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:10px 14px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+
+.out{display:flex;flex-direction:column;gap:12px}
+.bubble{position:relative;background:var(--bubble);color:var(--bubble-ink);border-radius:24px;padding:22px 22px 24px;font:500 clamp(18px,4.6vw,21px)/1.45 var(--body);min-height:96px}
+.bubble .text{white-space:pre-wrap;display:block}
+.roast{display:flex;align-items:center;justify-content:space-between;gap:12px;border:2px solid var(--line);border-radius:18px;padding:12px 14px;cursor:pointer}
+.roast strong{display:block;font-size:16px}
+.roast small{color:var(--muted);font-size:13px}
+.roast input{position:absolute;opacity:0;width:1px;height:1px}
+.switch{flex:none;width:52px;height:30px;border-radius:999px;background:var(--line);position:relative;transition:background .15s}
+.switch::after{content:"";position:absolute;top:4px;left:4px;width:22px;height:22px;border-radius:50%;background:var(--panel);box-shadow:0 1px 2px rgba(0,0,0,.25);transition:left .15s}
+.roast input:checked + .switch{background:var(--accent)}
+.roast input:checked + .switch::after{left:26px}
+.roast input:focus-visible + .switch{outline:3px solid var(--pop);outline-offset:2px}
+.roast.on{border-color:var(--accent)}
+.describe label{display:block}
+.describe summary{cursor:pointer;margin:0}
+.describe input[type=password]{position:static;opacity:1;width:100%;height:auto;pointer-events:auto;font:15px/1.4 var(--mono);color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:14px;padding:10px 12px}
+.describe textarea{width:100%;min-height:64px;resize:vertical;font:15px/1.4 var(--body);color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:14px;padding:10px 12px}
+.describe textarea:focus-visible{outline:3px solid var(--pop);outline-offset:1px}
+.bubble::before{content:"";position:absolute;top:-14px;left:38px;border:14px solid transparent;border-top:0;border-bottom-color:var(--bubble)}
+.bubble .who{display:block;font:500 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;opacity:.65;margin-bottom:10px}
+.bubble.thinking .text{opacity:.7;font-style:italic}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.note{font-size:14px;color:var(--muted);margin:0}
+.note.err{color:var(--accent)}
+footer{font-size:13px;color:var(--muted);text-align:center}
+@media (prefers-reduced-motion:reduce){.btn{transition:none}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Pet Thoughts · Translator v1</div>
+    <h1>What is your pet <span>actually</span> thinking?</h1>
+    <p class="sub">Snap or upload a photo of your dog or cat. We'll translate the look on its face. Accuracy: 0%. Confidence: 100%.</p>
+  </header>
+
+  <section class="device" aria-label="Translator">
+    <div class="window" id="window">
+      <span class="tag" id="tag">Example</span>
+      <svg id="placeholder" viewBox="0 0 120 100" aria-hidden="true">
+        <path d="M22 40 L30 8 L50 30 Z" fill="var(--ink)"/>
+        <path d="M98 40 L90 8 L70 30 Z" fill="var(--ink)"/>
+        <ellipse cx="60" cy="58" rx="42" ry="36" fill="var(--ink)"/>
+        <path d="M38 54 h14" stroke="var(--pop)" stroke-width="5" stroke-linecap="round"/>
+        <path d="M68 54 h14" stroke="var(--pop)" stroke-width="5" stroke-linecap="round"/>
+        <path d="M56 68 l4 4 4-4" stroke="var(--accent)" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <img id="preview" alt="Your pet" hidden>
+    </div>
+
+    <div class="pick">
+      <label class="btn grow" for="file" id="fileBtn" tabindex="0">📷 Point at your pet</label>
+      <input type="file" id="file" accept="image/jpeg,image/png,image/webp,image/gif" capture="environment">
+    </div>
+
+    <div>
+      <div class="label">Pick a voice</div>
+      <div class="chips" id="chips" role="group" aria-label="Personality"></div>
+    </div>
+
+    <label class="roast" id="roastWrap" for="roast">
+      <span><strong>🔥 Roast mode</strong><small>Your pet stops being polite. You are the target.</small></span>
+      <input type="checkbox" id="roast" role="switch">
+      <span class="switch" aria-hidden="true"></span>
+    </label>
+
+    <details class="describe" id="keyBox">
+      <summary class="label" id="keySummary">Setup: add your Claude API key</summary>
+      <label class="label" for="key" style="margin-top:10px">Anthropic API key</label>
+      <input type="password" id="key" autocomplete="off" spellcheck="false" placeholder="sk-ant-...">
+      <p class="note" style="margin-top:8px">Get one at console.anthropic.com → API Keys. It's saved only in this browser on this computer, and only sent to Anthropic.</p>
+    </details>
+
+    <button class="btn primary grow" id="go" disabled>Translate</button>
+  </section>
+
+  <section class="out" aria-live="polite">
+    <div class="bubble" id="bubble"><span class="who" id="who">Example · Smug judge</span><span class="text" id="text">I see you've chosen to sit on the floor again, despite owning a perfectly good couch that I have claimed. Bold. I will be supervising this decision from the windowsill, where the light is better and the company is mine.</span></div>
+    <div class="row">
+      <button class="btn" id="again" hidden>Translate again</button>
+      <button class="btn" id="copy" hidden>Copy text</button>
+      <button class="btn" id="stop" hidden>Stop</button>
+    </div>
+    <p class="note" id="note">Add a photo above to get your pet's real (fake) thoughts.</p>
+  </section>
+
+  <footer>For laughs only. Your pet did not sign off on any of this.</footer>
+</div>
+
+<script>
+const VOICES = [
+  {id:"smug", name:"Smug judge", desc:"a smug, deadpan, faintly disdainful narrator who is deeply unimpressed with the owner's life choices and treats them as a personal inconvenience",
+    loading:["Consulting the cat's legal team...","Reviewing your choices. All of them...","Sighing audibly..."]},
+  {id:"soap", name:"Soap opera", desc:"a soap-opera diva for whom everything is a betrayal, a scandal, or a life-or-death cliffhanger",
+    loading:["Cue the dramatic music...","Clutching pearls...","Previously, on Pet Thoughts..."]},
+  {id:"noir", name:"Noir detective", desc:"a hardboiled film-noir detective who treats the room like a crime scene and narrates in clipped, moody monologue",
+    loading:["Lighting a metaphorical cigarette...","Dusting the couch for prints...","It was a dark and treat-less night..."]},
+  {id:"golden", name:"Overexcited", desc:"breathless, overexcited golden-retriever energy where everything is the best thing that has ever happened",
+    loading:["Wagging intensifies...","OH WOW A PHOTO...","Zoomies in progress..."]},
+  {id:"royal", name:"Royalty in exile", desc:"a deposed monarch in exile, enduring modest commoner living conditions with wounded dignity",
+    loading:["Summoning the royal scribe...","Adjusting the invisible crown...","Petitioning the court..."]},
+  {id:"therapist", name:"Disappointed therapist", desc:"a calm, gently exasperated therapist who wants to talk about why the owner did that",
+    loading:["Taking notes on a tiny clipboard...","And how does that make you feel?","Reviewing last session..."]},
+];
+const MODELS = ["claude-sonnet-4-6","claude-sonnet-4-5","claude-3-5-sonnet-latest"];
+let voice = VOICES[0], imgData = null, ctl = null, busy = false, lastText = "";
+const $ = id => document.getElementById(id);
+const store = {
+  get(k){ try{ return localStorage.getItem(k) || ""; }catch{ return ""; } },
+  set(k,v){ try{ v ? localStorage.setItem(k,v) : localStorage.removeItem(k); }catch{} }
+};
+
+// voices
+const chips = $("chips");
+for (const v of VOICES){
+  const b = document.createElement("button");
+  b.className="chip"; b.type="button"; b.textContent=v.name; b.dataset.id=v.id;
+  b.setAttribute("aria-pressed", v===voice ? "true":"false");
+  b.onclick = () => { voice=v; for (const c of chips.children) c.setAttribute("aria-pressed", c.dataset.id===v.id?"true":"false"); };
+  chips.append(b);
+}
+$("roast").addEventListener("change", e => $("roastWrap").classList.toggle("on", e.target.checked));
+
+// API key
+function key(){ return $("key").value.trim(); }
+function syncKeyUI(){
+  const k = key();
+  $("keySummary").textContent = k ? "✓ API key saved (tap to change)" : "Setup: add your Claude API key";
+  if (!k) $("keyBox").open = true;
+}
+$("key").value = store.get("pt_key");
+$("key").addEventListener("input", () => { store.set("pt_key", key()); syncKeyUI(); updateGo(); });
+syncKeyUI();
+
+// photo -> shrink to a JPEG Claude can read
+$("fileBtn").addEventListener("keydown", e => { if (e.key==="Enter"||e.key===" "){ e.preventDefault(); $("file").click(); }});
+$("file").addEventListener("change", async e => {
+  const f = e.target.files && e.target.files[0];
+  if (!f) return;
+  try{
+    const url = URL.createObjectURL(f);
+    const img = new Image();
+    await new Promise((ok, bad) => { img.onload = ok; img.onerror = bad; img.src = url; });
+    const max = 1200, scale = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+    const c = document.createElement("canvas");
+    c.width = Math.round(img.naturalWidth*scale); c.height = Math.round(img.naturalHeight*scale);
+    c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+    imgData = c.toDataURL("image/jpeg", 0.85).split(",")[1];
+    $("preview").src = url; $("preview").hidden = false;
+    $("placeholder").hidden = true;
+    $("tag").textContent = "Your pet";
+    $("fileBtn").textContent = "📷 Use a different photo";
+    setNote(key() ? "Looking good. Pick a voice and hit Translate." : "Now add your API key in Setup above.");
+  }catch{
+    imgData = null;
+    setNote("That photo didn't open. Try a JPEG or PNG (iPhone HEIC photos may need converting).", true);
+  }
+  updateGo();
+});
+
+function setNote(t, err){ $("note").textContent=t; $("note").classList.toggle("err", !!err); }
+function updateGo(){ $("go").disabled = busy || !imgData || !key(); $("again").disabled = busy; }
+
+function prompt(){
+  const roast = $("roast").checked;
+  const roastRule = roast
+    ? "\n- ROAST MODE IS ON: the pet is roasting its owner, comedy-roast style. Be savage, blunt and cutting about the owner's habits, home, schedule, choices and priorities. No mercy, no softening, no compliments. Keep it PG-13: no slurs, nothing about race, religion, gender, sexuality, body, weight or looks."
+    : "";
+  return `You are writing a short comedic "pet translator" monologue for an app called Pet Thoughts. The attached image is a photo of someone's pet. Your job is NOT to accurately analyze animal behavior. Invent a fully committed, funny, specific first-person monologue of what the pet is thinking, in the voice of: ${voice.desc}.
+
+Rules:
+- Write 2-4 sentences, under 120 words total.
+- State invented interpretations as flat fact, in character. Never hedge ("it looks like", "possibly", "might be").
+- Reference specific visible details in the photo (pose, gaze, objects, setting) so the joke feels personalized.
+- The comedic target is the owner's life choices and the situation, never the pet's appearance or wellbeing. No jokes about the animal being sick, hurt, or suffering. If a person is visible, no jokes about their physical appearance.${roastRule}
+- If the image doesn't clearly show a dog or cat, stay in character and riff on whatever is visible anyway. Never break character or say you can't see a pet.
+- Output ONLY the monologue text. No preamble, no title, no quotation marks around it.
+- Make it different from any previous take (variation seed: ${Math.random().toString(36).slice(2,8)}).`;
+}
+
+async function callClaude(model, signal){
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method:"POST", signal,
+    headers:{
+      "content-type":"application/json",
+      "x-api-key": key(),
+      "anthropic-version":"2023-06-01",
+      "anthropic-dangerous-direct-browser-access":"true"
+    },
+    body: JSON.stringify({
+      model, max_tokens: 1000, temperature: 1,
+      messages:[{role:"user", content:[
+        {type:"image", source:{type:"base64", media_type:"image/jpeg", data: imgData}},
+        {type:"text", text: prompt()}
+      ]}]
+    })
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok){ const err = new Error(body?.error?.message || ("HTTP " + res.status)); err.status = res.status; err.type = body?.error?.type; throw err; }
+  return (body.content || []).filter(b => b.type === "text").map(b => b.text).join("").trim();
+}
+
+async function translate(){
+  if (busy || !imgData || !key()) return;
+  busy = true; updateGo();
+  ctl = new AbortController();
+  const bubble=$("bubble"), text=$("text");
+  $("who").textContent = voice.name + ($("roast").checked ? " · Roast mode" : "");
+  bubble.classList.add("thinking");
+  text.textContent = voice.loading[Math.floor(Math.random()*voice.loading.length)];
+  $("copy").hidden = true; $("again").hidden = true; $("stop").hidden = false;
+  setNote("");
+  try{
+    let out = null, lastErr = null;
+    for (const m of MODELS){
+      try{ out = await callClaude(m, ctl.signal); break; }
+      catch(e){ lastErr = e; if (!(e.status === 404 || e.type === "not_found_error")) throw e; }
+    }
+    if (out === null) throw lastErr;
+    lastText = out.replace(/^["“]|["”]$/g,"");
+    text.textContent = lastText;
+  }catch(e){
+    text.textContent = "…"; lastText = "";
+    if (e.name === "AbortError") {}
+    else if (e.status === 401) setNote("That API key didn't work. Check it in Setup above.", true);
+    else if (e.status === 400 && /credit|balance|billing/i.test(e.message)) setNote("Your API account is out of credits. Add some at console.anthropic.com → Billing.", true);
+    else if (e.status === 429) setNote("Too many translations at once. Wait a minute and try again.", true);
+    else if (e.status === 529 || e.status >= 500) setNote("Claude is busy right now. Try again in a moment.", true);
+    else if (e instanceof TypeError) setNote("Couldn't reach Claude. Check your internet connection.", true);
+    else setNote("Something went wrong: " + e.message, true);
+  }finally{
+    bubble.classList.remove("thinking");
+    busy = false; $("stop").hidden = true;
+    $("again").hidden = false;
+    $("copy").hidden = !lastText;
+    updateGo();
+  }
+}
+
+$("go").onclick = translate;
+$("again").onclick = translate;
+$("stop").onclick = () => ctl && ctl.abort();
+$("copy").onclick = async () => {
+  try{ await navigator.clipboard.writeText(lastText); $("copy").textContent="Copied!"; }
+  catch{ const r=document.createRange(); r.selectNodeContents($("text")); const s=getSelection(); s.removeAllRanges(); s.addRange(r); $("copy").textContent="Selected, press copy"; }
+  setTimeout(()=>{$("copy").textContent="Copy text"},1800);
+};
+updateGo();
+</script>
+</body>
+</html>
